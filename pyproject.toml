@@ -1,0 +1,26 @@
+[project]
+name = "tig"
+version = "0.1.0"
+description = "An AI coding agent, created using LlamaIndex workflow."
+readme = "README.md"
+authors = [
+    { name = "Rohan", email = "rsrohan99@gmail.com" }
+]
+requires-python = "==3.12.9"
+dependencies = [
+    "llama-index==0.12.28",
+    "llama-index-core==0.12.28",
+    "llama-index-llms-gemini==0.4.14",
+    "llama-index-llms-anthropic==0.6.10",
+    "llama-index-llms-openai==0.3.37",
+    "llama-index-utils-workflow==0.3.0",
+    "python-dotenv==1.1.0",
+    "inquirer==3.4.0",
+]
+
+[project.scripts]
+tig = "tig:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
