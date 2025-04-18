@@ -19,6 +19,7 @@ dependencies = [
     "pathspec==0.12.1",
     "ordered-set==4.1.0",
     "xmltodict==0.14.2",
+    "tzlocal==5.3.1",
 ]
 
 [project.scripts]

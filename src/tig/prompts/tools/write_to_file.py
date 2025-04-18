@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-TOOLS_FORMATTING_PROMPT = dedent("""
+WRITE_TO_FILE_PROMPT = dedent("""
 ## write_to_file
 Description: Request to write full content to a file at the specified path. If the file exists, it will be overwritten with the provided content. If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.
 Parameters:
@@ -20,20 +20,20 @@ Example: Requesting to write to frontend-config.json
 <write_to_file>
 <path>frontend-config.json</path>
 <content>
-{
+{{
   "apiEndpoint": "https://api.example.com",
-  "theme": {
+  "theme": {{
     "primaryColor": "#007bff",
     "secondaryColor": "#6c757d",
     "fontFamily": "Arial, sans-serif"
-  },
-  "features": {
+  }},
+  "features": {{
     "darkMode": true,
     "notifications": true,
     "analytics": false
-  },
+  }},
   "version": "1.0.0"
-}
+}}
 </content>
 <line_count>14</line_count>
 </write_to_file>

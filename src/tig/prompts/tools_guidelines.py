@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-TOOLS_FORMATTING_PROMPT = dedent("""
+TOOLS_GUIDELINES_PROMPT = dedent("""
 # Tool Use Guidelines
 
 1. Assess what information you already have and what information you need to proceed with the task.

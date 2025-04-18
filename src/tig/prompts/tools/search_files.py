@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-TOOLS_FORMATTING_PROMPT = dedent("""
+SEARCH_FILES_PROMPT = dedent("""
 ## search_files
 Description: Request to perform a regex search across files in a specified directory, providing context-rich results. This tool searches for patterns or specific content across multiple files, displaying each match with encapsulating context.
 Parameters:

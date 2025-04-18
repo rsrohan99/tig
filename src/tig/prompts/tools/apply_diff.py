@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-TOOLS_FORMATTING_PROMPT = dedent('''
+APPLY_DIFF_PROMPT = dedent('''
 ## apply_diff
 Description: Request to replace existing code using a search and replace block.
 This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.

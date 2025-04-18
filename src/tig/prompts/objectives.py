@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-TOOLS_FORMATTING_PROMPT = dedent("""
+OBJECTIVES_PROMPT = dedent("""
 ====
 
 OBJECTIVE

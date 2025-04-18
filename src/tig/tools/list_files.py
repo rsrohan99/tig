@@ -67,7 +67,7 @@ def load_gitignore(path="."):
 def list_files_recursively_respecting_gitignore(root_dir=".", timeout_sec=10.0):
     root_dir_path = Path(root_dir)
     spec = load_gitignore(root_dir)
-    all_files = OrderedSet([])
+    all_files: OrderedSet[str] = OrderedSet([])
     start_time = time.monotonic()
     for dirpath, sub_dirs, filenames in os.walk(root_dir_path):
         if time.monotonic() - start_time > timeout_sec:
@@ -92,7 +92,7 @@ def list_files_recursively_respecting_gitignore(root_dir=".", timeout_sec=10.0):
 def list_files_non_recursively_respecting_gitignore(root_dir="."):
     root_dir_path = Path(root_dir)
     spec = load_gitignore(root_dir)
-    all_files = OrderedSet([])
+    all_files: OrderedSet[str] = OrderedSet([])
     for item in root_dir_path.iterdir():
         if item.is_dir():
             rel_path = item.relative_to(root_dir_path)
@@ -105,7 +105,9 @@ def list_files_non_recursively_respecting_gitignore(root_dir="."):
     return all_files
 
 
-def format_list_files(dir_path: str, file_paths: list[str], limit_reached: bool) -> str:
+def format_list_files(
+    dir_path: str, file_paths: OrderedSet[str], limit_reached: bool
+) -> str:
     """
     Formats the list of file paths for output.
 
@@ -125,7 +127,7 @@ def format_list_files(dir_path: str, file_paths: list[str], limit_reached: bool)
     return formatted_files_list
 
 
-def list_files(dir_path: str, recursive: bool, limit: int) -> str:
+def list_files(dir_path: str, recursive: bool, limit=200) -> str:
     """
     Lists files and directories within a given path with options for recursion,
     ignoring patterns, and limits.
@@ -168,10 +170,8 @@ def list_files(dir_path: str, recursive: bool, limit: int) -> str:
     # --- Perform Listing ---
     if recursive:
         file_paths = list_files_recursively_respecting_gitignore(str(absolute_path))
-        limit_reached = len(file_paths) > limit
 
     else:
         file_paths = list_files_non_recursively_respecting_gitignore(str(absolute_path))
-        limit_reached = len(file_paths) > limit
 
-    return format_list_files(dir_path, file_paths, limit_reached)
+    return format_list_files(dir_path, file_paths, len(file_paths) > limit)
