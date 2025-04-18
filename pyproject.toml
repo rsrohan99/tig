@@ -1,7 +1,7 @@
 [project]
 name = "tig"
 version = "0.1.0"
-description = "An AI coding agent, created using LlamaIndex workflow."
+description = "AI coding agent, created using LlamaIndex workflow."
 readme = "README.md"
 authors = [
     { name = "Rohan", email = "rsrohan99@gmail.com" }
@@ -16,6 +16,9 @@ dependencies = [
     "llama-index-utils-workflow==0.3.0",
     "python-dotenv==1.1.0",
     "inquirer==3.4.0",
+    "pathspec==0.12.1",
+    "ordered-set==4.1.0",
+    "xmltodict==0.14.2",
 ]
 
 [project.scripts]

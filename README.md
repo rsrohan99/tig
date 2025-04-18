@@ -1,4 +1,5 @@
 # Tig
+AI coding agent, created using LlamaIndex workflow.
 
 
 [![](https://img.youtube.com/vi//maxresdefault.jpg)](https://www.youtube.com/watch?v=)
