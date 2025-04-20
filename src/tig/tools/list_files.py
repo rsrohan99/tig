@@ -136,7 +136,6 @@ def list_files(arguments: Dict) -> str:
     Args:
         dir_path: The starting directory path.
         recursive: Whether to list files recursively.
-        limit: The maximum number of paths to return.
 
     Returns:
         A string containing:

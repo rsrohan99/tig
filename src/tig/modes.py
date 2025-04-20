@@ -10,7 +10,7 @@ MODES = {
             3. Once you've gained more context about the user's request, you should create a detailed plan for how to accomplish the task. Include Mermaid diagrams if they help make your plan clearer.
             4. Ask the user if they are pleased with this plan, or if they would like to make any changes. Think of this as a brainstorming session where you can discuss the task and plan the best way to accomplish it.
             5. Once the user confirms the plan, ask them if they'd like you to write it to a markdown file.
-            6. Use the switch_mode tool to request that the user switch to another mode to implement the solution.""").strip(),
+            6. Finally attempt_completion if everything is good. Remember that you are an architect, DO NOT try to implement the plan, that is not your responsibility. You may ask the user to switch mode to "code" to implement your plan and attempt_completion of the task.""").strip(),
         "exclude_tools": ["execute_command"],
     },
     "code": {

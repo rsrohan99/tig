@@ -13,6 +13,7 @@ TOOLS_GUIDELINES_PROMPT = dedent("""
   - New terminal output in reaction to the changes, which you may need to consider or act upon.
   - Any other relevant feedback or information related to the tool use.
 6. ALWAYS wait for user confirmation after each tool use before proceeding. Never assume the success of a tool use without explicit confirmation of the result from the user.
+7. If some step is repeatedly failing, after maximum 3 tries, let the user know about the error and move on to the next step. Don't get stuck on an infinite loop.
 
 It is crucial to proceed step-by-step, waiting for the user's message after each tool use before moving forward with the task. This approach allows you to:
 1. Confirm the success of each step before proceeding.

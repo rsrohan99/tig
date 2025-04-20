@@ -14,6 +14,10 @@ from llama_index.core.workflow import (
 )
 from tig.modes import MODES
 from tig.prompts.system import get_system_prompt
+from tig.tools import (
+    list_files,
+    ask_followup_questions,
+)
 
 
 class NewTaskCreated(Event):
@@ -22,6 +26,7 @@ class NewTaskCreated(Event):
 
 class PromptGenerated(Event):
     prompt: str
+    is_system_prompt: bool = False
 
 
 class LLMResponded(Event):
@@ -50,7 +55,7 @@ class TigWorkflow(Workflow):
 
     @step
     async def start_new_task(self, ctx: Context, ev: StartEvent) -> NewTaskCreated:
-        task = ev.data.get("task")
+        task = ev.get("task")
         await ctx.set("task", task)
         return NewTaskCreated()
 
@@ -60,12 +65,16 @@ class TigWorkflow(Workflow):
     ) -> PromptGenerated:
         task = await ctx.get("task")
         system_prompt = get_system_prompt(self.mode, task)
-        return PromptGenerated(prompt=system_prompt)
+        return PromptGenerated(prompt=system_prompt, is_system_prompt=True)
 
     @step
     async def prompt_llm(self, ev: PromptGenerated) -> LLMResponded:
         prompt = ev.prompt
-        self.chat_history.append(ChatMessage(role="user", content=prompt))
+        print(prompt)
+        if ev.is_system_prompt:
+            self.chat_history.append(ChatMessage(role="system", content=prompt))
+        else:
+            self.chat_history.append(ChatMessage(role="user", content=prompt))
         response = await self.llm.achat(messages=self.chat_history)
         self.chat_history.append(ChatMessage(role="assistant", content=str(response)))
         return LLMResponded(response=str(response))
@@ -75,15 +84,39 @@ class TigWorkflow(Workflow):
         self, ev: LLMResponded
     ) -> ToolCallRequired | PromptGenerated:
         response = ev.response
-        pattern = r"<(?P<tag>\w+)[^>]*>.*</(?P=tag)>"
+        pattern = r"<(?P<tag>(?!thinking\b)\w+)[^>]*>.*</(?P=tag)>"
         match = re.search(pattern, response, re.DOTALL)
         if not match:
             return PromptGenerated(
                 prompt="You did not use any tool, please use appropriate tool using valid xml format."
             )
+        clean_response = re.sub(
+            r"<(?P<tag>\w+)[^>]*>.*?</(?P=tag)>", "", response, flags=re.DOTALL
+        ).strip()
+        clean_response = re.sub(
+            r"```xml.*?```", "", clean_response, flags=re.DOTALL
+        ).strip()
+        print(f"\n{clean_response}\n")
+        # print(f"\n{response}\n")
         tool = parse(match.group())
         return ToolCallRequired(tool=tool)
 
     @step
-    async def use_tool(self, ctx: Context, ev: ToolCallRequired) -> PromptGenerated | StopEvent:
-
+    async def use_tool(self, ev: ToolCallRequired) -> PromptGenerated | StopEvent:
+        tool_name = list(ev.tool.keys())[0]
+        tool_arguments = ev.tool[tool_name]
+        print(f"\n🛠️ Using tool: {tool_name}\n")
+        if tool_name == "list_files":
+            return PromptGenerated(prompt=list_files(tool_arguments))
+        elif tool_name == "ask_followup_question":
+            return PromptGenerated(
+                prompt=ask_followup_questions(tool_arguments),
+            )
+        elif tool_name == "attempt_completion":
+            if "result" in tool_arguments:
+                print(f"\n{tool_arguments['result']}\n")
+            return StopEvent(message="Task completed successfully.")
+        else:
+            return PromptGenerated(
+                prompt=f"Tool {tool_name} is not a valid tool. Please use a valid tool."
+            )

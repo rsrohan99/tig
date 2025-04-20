@@ -37,7 +37,12 @@ def get_system_prompt(
     formatted_time = current_time.strftime(
         f"%m/%d/%Y, %I:%M:%S %p ({timezone_name}, GMT%z)"
     )
-    cwd_files_list = list_files(current_dir, recursive=True)
+    cwd_files_list = list_files(
+        {
+            "path": current_dir,
+            "recursive": True,
+        }
+    )
     current_mode = MODES[mode]
     system_prompt = ""
     system_prompt += current_mode["role"] + "\n"
