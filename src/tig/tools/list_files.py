@@ -2,6 +2,7 @@ import os
 import time
 from pathlib import Path
 from textwrap import dedent
+from typing import Dict
 
 import pathspec
 from ordered_set import OrderedSet
@@ -127,7 +128,7 @@ def format_list_files(
     return formatted_files_list
 
 
-def list_files(dir_path: str, recursive: bool, limit=200) -> str:
+def list_files(arguments: Dict) -> str:
     """
     Lists files and directories within a given path with options for recursion,
     ignoring patterns, and limits.
@@ -141,8 +142,14 @@ def list_files(dir_path: str, recursive: bool, limit=200) -> str:
         A string containing:
         - A list of absolute file/directory paths (directories end with '/').
     """
-    if limit <= 0:
-        return ""
+    if "path" not in arguments:
+        return "Error: Missing 'path' argument."
+    if "recursive" not in arguments:
+        return "Error: Missing 'recursive' argument."
+
+    dir_path = arguments["path"]
+    recursive = arguments["recursive"]
+    limit = 200
 
     try:
         # Use pathlib for easier path manipulation
