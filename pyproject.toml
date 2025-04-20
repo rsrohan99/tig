@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Rohan", email = "rsrohan99@gmail.com" }
 ]
-requires-python = "==3.12.9"
+requires-python = ">=3.12.9"
 dependencies = [
     "llama-index==0.12.28",
     "llama-index-core==0.12.28",
@@ -20,6 +20,10 @@ dependencies = [
     "ordered-set==4.1.0",
     "xmltodict==0.14.2",
     "tzlocal==5.3.1",
+    "tree-sitter>=0.24.0",
+    "tree-sitter-python>=0.23.6",
+    "tree-sitter-javascript>=0.23.1",
+    "tree-sitter-typescript>=0.23.2",
 ]
 
 [project.scripts]
