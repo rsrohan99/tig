@@ -19,6 +19,7 @@ from tig.tools import (
     ask_followup_questions,
     list_code_definitions,
     read_file,
+    regex_search_files,
 )
 
 
@@ -122,6 +123,10 @@ class TigWorkflow(Workflow):
             elif tool_name == "list_code_definition_names":
                 return PromptGenerated(
                     prompt=list_code_definitions(tool_arguments, self.auto_approve),
+                )
+            elif tool_name == "search_files":
+                return PromptGenerated(
+                    prompt=regex_search_files(tool_arguments, self.auto_approve),
                 )
             elif tool_name == "attempt_completion":
                 if "result" in tool_arguments:

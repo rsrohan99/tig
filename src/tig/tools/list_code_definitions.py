@@ -83,7 +83,7 @@ def list_code_definitions(arguments: Dict, auto_approve=False) -> str:
         ]
         answers = inquirer.prompt(questions)
         if answers and not answers["confirm"]:
-            return f"Error: User denied permission to read contents from '{path}' while using list_code_definition_names tool. Try to complete your task without reading this file."
+            return f"Error: User denied permission to read contents from '{path}' while using list_code_definition_names tool. Try to complete your task without reading these contents."
     code_definitions = get_code_definitions(path)
     return_message = f'[list_code_definition_names for "{path}"] Result:\n\n'
     for file, definitions in code_definitions.items():
