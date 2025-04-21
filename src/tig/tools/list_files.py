@@ -32,6 +32,7 @@ def load_gitignore(path="."):
         "node_modules",
         "__pycache__",
         "env",
+        ".env",
         "venv",
         ".venv",  # Common Python venv name
         "target/dependency",  # Rust/Java?

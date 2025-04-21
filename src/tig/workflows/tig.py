@@ -17,6 +17,8 @@ from tig.prompts.system import get_system_prompt
 from tig.tools import (
     list_files,
     ask_followup_questions,
+    list_code_definitions,
+    read_file,
 )
 
 
@@ -106,17 +108,30 @@ class TigWorkflow(Workflow):
         tool_name = list(ev.tool.keys())[0]
         tool_arguments = ev.tool[tool_name]
         print(f"\n🛠️ Using tool: {tool_name}\n")
-        if tool_name == "list_files":
-            return PromptGenerated(prompt=list_files(tool_arguments))
-        elif tool_name == "ask_followup_question":
+        try:
+            if tool_name == "list_files":
+                return PromptGenerated(prompt=list_files(tool_arguments))
+            elif tool_name == "ask_followup_question":
+                return PromptGenerated(
+                    prompt=ask_followup_questions(tool_arguments),
+                )
+            elif tool_name == "read_file":
+                return PromptGenerated(
+                    prompt=read_file(tool_arguments, self.auto_approve),
+                )
+            elif tool_name == "list_code_definition_names":
+                return PromptGenerated(
+                    prompt=list_code_definitions(tool_arguments, self.auto_approve),
+                )
+            elif tool_name == "attempt_completion":
+                if "result" in tool_arguments:
+                    print(f"\n{tool_arguments['result']}\n")
+                return StopEvent(message="Task completed successfully.")
+            else:
+                return PromptGenerated(
+                    prompt=f"Tool {tool_name} is not a valid tool. Please use a valid tool."
+                )
+        except Exception as e:
             return PromptGenerated(
-                prompt=ask_followup_questions(tool_arguments),
-            )
-        elif tool_name == "attempt_completion":
-            if "result" in tool_arguments:
-                print(f"\n{tool_arguments['result']}\n")
-            return StopEvent(message="Task completed successfully.")
-        else:
-            return PromptGenerated(
-                prompt=f"Tool {tool_name} is not a valid tool. Please use a valid tool."
+                prompt=f'Error occurred while using tool "{tool_name}": {str(e)}\nMake sure to use tools correctly in valid xml format and valid arguments.'
             )
