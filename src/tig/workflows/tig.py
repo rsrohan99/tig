@@ -20,6 +20,7 @@ from tig.tools import (
     list_code_definitions,
     read_file,
     regex_search_files,
+    write_to_file,
 )
 
 
@@ -127,6 +128,10 @@ class TigWorkflow(Workflow):
             elif tool_name == "search_files":
                 return PromptGenerated(
                     prompt=regex_search_files(tool_arguments, self.auto_approve),
+                )
+            elif tool_name == "write_to_file":
+                return PromptGenerated(
+                    prompt=write_to_file(tool_arguments, self.auto_approve),
                 )
             elif tool_name == "attempt_completion":
                 if "result" in tool_arguments:
