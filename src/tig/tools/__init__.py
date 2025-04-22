@@ -4,6 +4,7 @@ from .list_code_definitions import list_code_definitions
 from .read_file import read_file
 from .search_files import regex_search_files
 from .write_to_file import write_to_file
+from .apply_diff import apply_diff
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "read_file",
     "regex_search_files",
     "write_to_file",
+    "apply_diff",
 ]

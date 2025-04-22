@@ -1,7 +1,7 @@
 import inquirer
 
 
-def write_to_file(arguments: dict, auto_approve: bool = False) -> str:
+def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str:
     """
     Write the content to a file.
     Args:
@@ -13,6 +13,8 @@ def write_to_file(arguments: dict, auto_approve: bool = False) -> str:
     """
     if "path" not in arguments or "content" not in arguments:
         return "Error: Missing 'path' or 'content' in arguments. Both are required for write_to_file tool."
+    if mode == 'architect' and not arguments.get("path", "").endswith(".md"):
+        return "Error: Error while running write_to_file tool. In architect mode, you are only allowed to write to markdown files, do not try to write to other files in 'architect' mode."
     file_path = arguments["path"]
     content = arguments["content"]
     lines = content.split("\n")

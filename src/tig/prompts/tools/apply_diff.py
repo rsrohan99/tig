@@ -63,7 +63,7 @@ Search/Replace content with multi edits:
 :start_line:1
 -------
 def calculate_total(items):
-    sum = 0
+    total = 0
 =======
 def calculate_sum(items):
     sum = 0
