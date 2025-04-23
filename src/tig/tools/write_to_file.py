@@ -1,3 +1,4 @@
+import os
 import inquirer
 
 
@@ -13,7 +14,7 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
     """
     if "path" not in arguments or "content" not in arguments:
         return "Error: Missing 'path' or 'content' in arguments. Both are required for write_to_file tool."
-    if mode == 'architect' and not arguments.get("path", "").endswith(".md"):
+    if mode == "architect" and not arguments.get("path", "").endswith(".md"):
         return "Error: Error while running write_to_file tool. In architect mode, you are only allowed to write to markdown files, do not try to write to other files in 'architect' mode."
     file_path = arguments["path"]
     content = arguments["content"]
@@ -21,7 +22,8 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
     print(f"\n# Tig is about to write the following content to '{file_path}':")
     print("-" * 80)
     for line_num, line in enumerate(lines):
-        print(f"{line_num + 1} | {line}")
+        line_num_1_based = line_num + 1
+        print(f"{line_num_1_based:4d} | {line}")
     print("-" * 80)
     if not auto_approve:
         # Ask for confirmation if not auto-approving
@@ -34,7 +36,11 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
         ]
         answers = inquirer.prompt(questions)
         if answers and not answers["confirm"]:
-            return f"Error: User denied permission to write to '{file_path}'."
+            feedback = input(
+                "Instruct Tig on what to do instead as you have rejected the changes: "
+            )
+            return f"[write_to_file for file: '{file_path}'] Result:\nUser denied permission to write to '{file_path}'.\nUser has given this feedback: \n<feedback>{feedback}</feedback>\nFeel free to use ask_followup_question tool for further clarification."
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w") as f:
         f.write(content)
     return f"[write_to_file for '{file_path}'] Result:\nThe content was successfully written to '{file_path}'.\n"

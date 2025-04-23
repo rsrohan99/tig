@@ -21,6 +21,7 @@ from tig.tools import (
     read_file,
     regex_search_files,
     write_to_file,
+    apply_diff,
 )
 
 
@@ -131,7 +132,11 @@ class TigWorkflow(Workflow):
                 )
             elif tool_name == "write_to_file":
                 return PromptGenerated(
-                    prompt=write_to_file(tool_arguments, self.auto_approve),
+                    prompt=write_to_file(tool_arguments, self.mode, self.auto_approve),
+                )
+            elif tool_name == "apply_diff":
+                return PromptGenerated(
+                    prompt=apply_diff(tool_arguments, self.mode, self.auto_approve),
                 )
             elif tool_name == "attempt_completion":
                 if "result" in tool_arguments:

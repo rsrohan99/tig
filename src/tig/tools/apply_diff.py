@@ -5,6 +5,52 @@ from functools import partial
 import inquirer
 from diff_match_patch import diff_match_patch
 
+# ANSI escape codes
+ANSI_STRIKETHROUGH = "\033[9m"
+ANSI_UNDERLINE = "\033[4m"
+ANSI_RED = "\033[31m"
+ANSI_GREEN = "\033[32m"
+ANSI_RESET = "\033[0m"
+
+
+def flush_line(num, content):
+    # Print line number padded to 4 spaces + content
+    print(f"{num:4d} | {content}")
+
+
+def pretty_print_diffs_with_line_numbers(diffs):
+    dmp = diff_match_patch()
+    line_num = 1
+    line_buffer = ""
+    for op, data in diffs:
+        # Split data by lines, keep line breaks to handle line numbers correctly
+        lines = data.splitlines(keepends=True)
+        for line in lines:
+            # Format line content based on diff operation
+            if op == dmp.DIFF_INSERT:
+                # Underline added text in green
+                formatted = (
+                    f"{ANSI_GREEN}{ANSI_UNDERLINE}{line.rstrip('\n')}{ANSI_RESET}"
+                )
+            elif op == dmp.DIFF_DELETE:
+                # Strikethrough deleted text in red
+                formatted = (
+                    f"{ANSI_RED}{ANSI_STRIKETHROUGH}{line.rstrip('\n')}{ANSI_RESET}"
+                )
+            else:
+                # Equal text normal
+                formatted = line
+            # Append formatted line content to buffer
+            line_buffer += formatted
+            # If line ends, print line with line number and reset buffer
+            if line.endswith("\n"):
+                flush_line(line_num, line_buffer.rstrip("\n"))
+                line_buffer = ""
+                line_num += 1
+    # Flush any remaining content not ended by newline
+    if line_buffer:
+        flush_line(line_num, line_buffer)
+
 
 def find_string_index(strings: list[str], x):
     total = 0
@@ -33,9 +79,9 @@ def adjust_indentation(original_indents, line):
         final_indent = matched_indent[: max(0, len(matched_indent) + relative_level)]
     else:
         final_indent = matched_indent + current_indent[matched_indent_level:]
-    print(
-        f"[{matched_indent}], [{current_indent}], {relative_level}, [{final_indent}] --- {line.strip()}"
-    )
+    # print(
+    #     f"[{matched_indent}], [{current_indent}], {relative_level}, [{final_indent}] --- {line.strip()}"
+    # )
     return final_indent + line.strip()
 
 
@@ -262,6 +308,35 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         successfull_diffs += 1
 
     full_final_content = line_ending.join(result_lines)
-    print(full_final_content)
-    print("\n-------------\n".join(diff_error_messages))
-    return full_final_content
+    print(f"\n# Tig is about to edit the contents of '{file_path}':")
+    print("-" * 80)
+    dmp = diff_match_patch()
+    diffs = dmp.diff_main(original_content, full_final_content)
+    dmp.diff_cleanupSemantic(diffs)
+    pretty_print_diffs_with_line_numbers(diffs)
+    print("-" * 80)
+    if not auto_approve:
+        # Ask for confirmation if not auto-approving
+        questions = [
+            inquirer.Confirm(
+                "confirm",
+                message=f"Allow Tig to edit the contents in '{file_path}'?",
+                default=True,
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        if answers and not answers["confirm"]:
+            feedback = input(
+                "Instruct Tig on what to do instead as you have rejected the changes: "
+            )
+            return f"[apply_diff for file: '{file_path}'] Result:\nUser denied permission to edit '{file_path}'.\nUser has given this feedback: \n<feedback>{feedback}</feedback>\nFeel free to use ask_followup_question tool for further clarification."
+    with open(file_path, "w") as f:
+        f.write(full_final_content)
+    result_message = ""
+    if len(replacements) == successfull_diffs:
+        result_message = f"[apply_diff for '{file_path}'] Result:\nAll {successfull_diffs} out of {len(replacements)} diffs were successfully applied to '{file_path}'.\n"
+    elif successfull_diffs > 0 and successfull_diffs < len(replacements):
+        result_message = f"[apply_diff for '{file_path}'] Result:\n{successfull_diffs} out of {len(replacements)} diffs were successfully applied to '{file_path}'.\nAs some of the diffs were not applied, make sure to use read_file on '{file_path}' to ensure everything is ok as partially applied diffs may lead to unexpected results.\nHere are some information on why the diffs were not applied:\n{'\n---\n'.join(diff_error_messages)}"
+    elif successfull_diffs == 0:
+        result_message = f"[apply_diff for '{file_path}'] Result:\nNo diffs were successfully applied to '{file_path}'.\nHere are some information on why the diffs were not applied:\n{'\n---\n'.join(diff_error_messages)}"
+    return result_message

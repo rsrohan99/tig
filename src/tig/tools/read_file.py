@@ -26,14 +26,14 @@ def read_lines(file_path, start_line=0, end_line=None):
             # Only append lines starting from start_line
             if current_line_num >= start_line:
                 last_line_num = current_line_num
-                lines.append(f"{current_line_num + 1} | {line}")
+                line_number_1_based = current_line_num + 1
+                lines.append(f"{line_number_1_based:4d} | {line}")
 
             # Stop if we've reached the end line
             if current_line_num >= end_line:
                 break
 
-
-    return lines, last_line_num+1
+    return lines, last_line_num + 1
 
 
 def read_file(arguments: Dict, auto_approve=False) -> str:
@@ -78,11 +78,11 @@ def read_file(arguments: Dict, auto_approve=False) -> str:
     if "start_line" in arguments:
         start_line = int(arguments["start_line"])
     if "end_line" in arguments:
-        end_line = int(arguments["end_line"]) -1
+        end_line = int(arguments["end_line"]) - 1
         if start_line > end_line:
             return f"Error: start_line ({start_line}) cannot be greater than end_line ({end_line}) for read_file tool."
 
-    file_lines, last_line_num = read_lines(path, start_line-1, end_line)
+    file_lines, last_line_num = read_lines(path, start_line - 1, end_line)
     file_contents = "".join(file_lines)
     return f"""
 [read_file for '{path}']
