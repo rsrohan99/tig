@@ -1,6 +1,8 @@
 import os
 import inquirer
 
+from tig.utils.syntax_checker import check_syntax
+
 
 def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str:
     """
@@ -18,6 +20,14 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
         return "Error: Error while running write_to_file tool. In architect mode, you are only allowed to write to markdown files, do not try to write to other files in 'architect' mode."
     file_path = arguments["path"]
     content = arguments["content"]
+    file_extension = file_path.split(".")[-1]
+    errors_found = ""
+    try:
+        errors_found = check_syntax(content, file_extension)
+    except Exception as _:
+        pass
+    if errors_found:
+        return f"Error: Some problems were found in the content you were trying to write to '{file_path}' using the write_to_file tool.\nHere are the problems found for '{file_path}':\n{errors_found}\nPlease fix the problems and try again.\n"
     lines = content.split("\n")
     print(f"\n# Tig is about to write the following content to '{file_path}':")
     print("-" * 80)

@@ -1,9 +1,12 @@
+import os
 import re
 from textwrap import dedent
 from functools import partial
 
 import inquirer
 from diff_match_patch import diff_match_patch
+
+from tig.utils.syntax_checker import check_syntax
 
 # ANSI escape codes
 ANSI_STRIKETHROUGH = "\033[9m"
@@ -307,7 +310,15 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         delta = delta - len(matched_lines) + len(replace_lines)
         successfull_diffs += 1
 
+    file_extension = file_path.split(".")[-1]
     full_final_content = line_ending.join(result_lines)
+    errors_found = ""
+    try:
+        errors_found = check_syntax(full_final_content, file_extension)
+    except Exception as _:
+        pass
+    if errors_found:
+        return f"Error: Some problems were found in the content you were trying to update in '{file_path}' using the apply_diff tool.\nHere are the problems found for '{file_path}':\n{errors_found}\nPlease fix the problems and try again.\n"
     print(f"\n# Tig is about to edit the contents of '{file_path}':")
     print("-" * 80)
     dmp = diff_match_patch()
