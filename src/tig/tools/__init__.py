@@ -5,6 +5,7 @@ from .read_file import read_file
 from .search_files import regex_search_files
 from .write_to_file import write_to_file
 from .apply_diff import apply_diff
+from .execute_command import execute_command
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "regex_search_files",
     "write_to_file",
     "apply_diff",
+    "execute_command",
 ]
