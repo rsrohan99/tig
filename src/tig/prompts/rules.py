@@ -5,7 +5,7 @@ RULES_PROMPT = dedent("""
 
 RULES
 
-- The project base directory is: {pwd}
+- The project base directory is: {pwd}, you don't have to create a project directory.
 - All file paths must be relative to this directory. However, commands may change directories in terminals, so respect working directory specified by the response to <execute_command>.
 - You cannot `cd` into a different directory to complete a task. You are stuck operating from '{pwd}', so be sure to pass in the correct 'path' parameter when using tools that require a path.
 - Do not use the ~ character or $HOME to refer to the home directory.

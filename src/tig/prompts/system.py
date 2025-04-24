@@ -74,7 +74,7 @@ def get_system_prompt(
         system_prompt += f"\nMode Specific Instructions\n{current_mode['mode_specific_instructions']}\n"
     system_prompt += OBJECTIVES_PROMPT.format() + "\n"
     system_prompt += (
-        f"Current Workspace Directory ({current_dir}) Files: \n{cwd_files_list}\n====\n"
+        f"Project Directory ({current_dir}) Files: \n{cwd_files_list}\n====\n"
     )
     system_prompt += f"\n<task>\n{task}\n</task>\n"
     return system_prompt

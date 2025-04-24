@@ -1,4 +1,5 @@
 import os
+import readline  # noqa: F401
 import asyncio
 import argparse
 import inquirer
@@ -8,10 +9,11 @@ from dotenv import load_dotenv
 from llama_index.llms.gemini import Gemini
 
 from tig.workflows.tig import TigWorkflow
+from tig.utils.intro import print_intro
 
 
 async def cli():
-    load_dotenv()
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))
     parser = argparse.ArgumentParser(
         description="🐯 Tig - AI coding agent",
         usage="tig --mode <architect|code>",
@@ -43,17 +45,35 @@ async def cli():
             print("No mode selected. Exiting.")
             return
 
-    os.system("cls" if os.name == "nt" else "clear")
-    print("🐯 Tig - AI coding agent")
-    print(f"\nRunning in '{args.mode}' mode.")
-    print("\nGive Tig a task to do. Type '/exit' to quit.\n")
+    print_intro(args.mode)
 
     while True:
-        new_task = input("\nNew task: ")
+        new_task = input("\nNew task: ").strip()
+        if not new_task:
+            print("\n❌ Please provide a task.\n")
+            continue
         if new_task.lower() == "/exit":
             break
-        if not new_task:
-            print("\n❌ Please provide a task.")
+        if new_task.lower().startswith("/mode"):
+            command_args = new_task.split()
+            if len(command_args) < 2:
+                print(
+                    "\nPlease provide a mode. Available modes: 'architect', 'code'. E.g. \"/mode code\"\n"
+                )
+                continue
+            new_mode = command_args[1].strip()
+            if new_mode not in ["architect", "code"]:
+                print(
+                    "\nInvalid mode. Available modes: 'architect', 'code'. E.g. \"/mode code\"\n"
+                )
+                continue
+            args.mode = new_mode
+            print_intro(args.mode)
+            continue
+        if new_task.lower().startswith("/"):
+            print(
+                "\n❌ Invalid command. Type '/exit' to quit or '/mode <mode_name>' to switch modes.\n"
+            )
             continue
         workflow = TigWorkflow(
             llm=Gemini(model="models/gemini-2.0-flash"),

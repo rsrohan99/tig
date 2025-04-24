@@ -1,4 +1,5 @@
 import os
+import inquirer
 
 
 def execute_command(arguments: dict, mode: str = "code") -> str:
@@ -32,14 +33,19 @@ def execute_command(arguments: dict, mode: str = "code") -> str:
         f"Tig asked you to execute the following command in your terminal:\n\n```\n{command}\n```\nCopy everything between ``` and paste it in your terminal.\n\nAfter you run the command, please provide Tig with the output of the command and any other relevant information or feedback you have.\n\nIf you don't want to run the command, tell tig what to do instead so that it can continue with its task."
     )
     print("-" * 80)
-    print("Your response: ", end="")
-    feedback_lines = []
-    while True:
-        feedback = input()
-        if feedback.strip() == "":
-            break
-        feedback_lines.append(feedback)
+    questions = [inquirer.Editor("long_resp", message="Your response: ")]
+    answers = inquirer.prompt(questions)
+    if answers and answers.get("long_resp", ""):
+        feedback = answers.get("long_resp", "").strip()
+    else:
+        print("Editor not found, enter your response here: ", end="")
+        feedback_lines = []
+        while True:
+            feedback = input()
+            if feedback.strip() == "":
+                break
+            feedback_lines.append(feedback)
 
-    feedback = "\n".join(feedback_lines)
+        feedback = "\n".join(feedback_lines)
 
     return f"""[execute_command for command: '{command}'{f' in cwd: "{cwd}"' if cwd else ""}]\nUser provided the following response, which includes the output of the command and may also include additional feedback.\n<response>\n{feedback}\n</response>"""

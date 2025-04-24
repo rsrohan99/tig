@@ -1,7 +1,6 @@
 import re
 from typing import Dict, List, Any
 
-from xmltodict import parse
 from llama_index.core.llms.llm import LLM
 from llama_index.core.llms import ChatMessage
 from llama_index.core.workflow import (
@@ -13,6 +12,7 @@ from llama_index.core.workflow import (
     StopEvent,
 )
 from tig.modes import MODES
+from tig.utils.xml import parse_tool_call
 from tig.prompts.system import get_system_prompt
 from tig.tools import (
     list_files,
@@ -102,9 +102,10 @@ class TigWorkflow(Workflow):
         clean_response = re.sub(
             r"```xml.*?```", "", clean_response, flags=re.DOTALL
         ).strip()
-        print(f"\n{clean_response}\n")
-        # print(f"\n{response}\n")
-        tool = parse(match.group())
+        clean_response = re.sub(r"^\s*(assistant:\s*)+", "", clean_response).strip()
+        # print(f"\nTig: {clean_response}\n")
+        print(f"\n{response}\n")
+        tool = parse_tool_call(match.group())
         return ToolCallRequired(tool=tool)
 
     @step

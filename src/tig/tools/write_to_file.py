@@ -19,6 +19,7 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
     if mode == "architect" and not arguments.get("path", "").endswith(".md"):
         return "Error: Error while running write_to_file tool. In architect mode, you are only allowed to write to markdown files, do not try to write to other files in 'architect' mode."
     file_path = arguments["path"]
+    absolute_file_path = os.path.abspath(file_path)
     content = arguments["content"]
     file_extension = file_path.split(".")[-1]
     errors_found = ""
@@ -50,7 +51,7 @@ def write_to_file(arguments: dict, mode: str, auto_approve: bool = False) -> str
                 "Instruct Tig on what to do instead as you have rejected the changes: "
             )
             return f"[write_to_file for file: '{file_path}'] Result:\nUser denied permission to write to '{file_path}'.\nUser has given this feedback: \n<feedback>{feedback}</feedback>\nFeel free to use ask_followup_question tool for further clarification."
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, "w") as f:
+    os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
+    with open(absolute_file_path, "w") as f:
         f.write(content)
     return f"[write_to_file for '{file_path}'] Result:\nThe content was successfully written to '{file_path}'.\n"

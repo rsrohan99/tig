@@ -1,6 +1,7 @@
 from typing import Dict
 import inquirer
 from textwrap import dedent
+import re
 
 
 def format_response(question: str, answer: str) -> str:
@@ -30,13 +31,11 @@ def ask_followup_questions(arguments: Dict) -> str:
     if "question" not in arguments:
         return "Error: No question provided. Try asking again."
 
-    if "follow_up" in arguments and "suggest" in arguments["follow_up"]:
-        suggestions = []
+    if "follow_up" in arguments:
+        suggestions = re.findall(
+            r"<suggest>(.*?)</suggest>", arguments["follow_up"], re.DOTALL
+        )
         manual_answer_prompt = "Let me enter my own answer"
-        if isinstance(arguments["follow_up"]["suggest"], str):
-            suggestions.append(arguments["follow_up"]["suggest"])
-        elif isinstance(arguments["follow_up"]["suggest"], list):
-            suggestions += arguments["follow_up"]["suggest"]
         suggestions.append(manual_answer_prompt)
         questions = [
             inquirer.List(
@@ -52,10 +51,16 @@ def ask_followup_questions(arguments: Dict) -> str:
                 answer = input(f"\n{arguments['question']}: ")
             return format_response(arguments["question"], answer)
         else:
-            return format_response(arguments["question"], "Error: User didn't provide any answer. Try asking again.")
+            return format_response(
+                arguments["question"],
+                "Error: User didn't provide any answer. Try asking again.",
+            )
     else:
         answer = input(f"\n{arguments['question']}: ")
         if answer:
             return format_response(arguments["question"], answer)
         else:
-            return format_response(arguments["question"], "Error: User didn't provide any answer. Try asking again.")
+            return format_response(
+                arguments["question"],
+                "Error: User didn't provide any answer. Try asking again.",
+            )
