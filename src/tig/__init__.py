@@ -81,7 +81,10 @@ async def cli():
             timeout=3600,
         )
         # draw_all_possible_flows(workflow)
-        await workflow.run(task=new_task)
+        try:
+            await workflow.run(task=new_task)
+        except asyncio.CancelledError:
+            pass
 
 
 def main():

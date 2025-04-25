@@ -24,6 +24,7 @@ dependencies = [
     "tree-sitter-javascript>=0.23.1",
     "tree-sitter-typescript>=0.23.2",
     "diff-match-patch>=20241021",
+    "psutil>=7.0.0",
 ]
 
 [project.scripts]

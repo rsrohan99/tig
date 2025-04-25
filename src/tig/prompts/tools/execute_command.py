@@ -6,6 +6,7 @@ Description: Request to execute a CLI command on the system. Use this when you n
 Parameters:
 - command: (required) The CLI command to execute. This should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions.
 - cwd: (optional) The working directory to execute the command in (default: {pwd}).
+- timeout: (optional, in seconds) Use this only for commands that run forever, like running dev servers e.g. 'npm run dev', fastapi, flask, django etc. The user will run the command for this many seconds and then send you the output.
 
 Note: Do not try to run 'cd' command to change directory, it will not work as cd state is not preserved. If you wanna run a command in a different directory other than "{pwd}", you need to put that directory in the `cwd` parameter.
 
@@ -18,6 +19,7 @@ Usage:
 Example: Requesting to execute npm run dev
 <execute_command>
 <command>npm run dev</command>
+<timeout>10</timeout>
 </execute_command>
 
 Example: Requesting to execute ls in a specific directory if directed

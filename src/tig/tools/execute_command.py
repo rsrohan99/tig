@@ -11,6 +11,7 @@ def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> 
         arguments (dict): A dictionary containing the file path and diff.
             command (str): The command to execute
             cwd (str): The directory from where the user should run the command
+            timeout(int): The time in seconds to wait for the command to complete
         auto_approve (bool): A flag indicating whether to auto-approve the action.
         mode (str): The mode in which Tig is running.
     """
@@ -31,6 +32,11 @@ def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> 
     else:
         absolute_cwd = os.getcwd()
 
+    if "timeout" in arguments:
+        timeout = int(arguments["timeout"])
+    else:
+        timeout = 3600
+
     print(
         f"\n# Tig is about to execute the command: '{command}' inside '{absolute_cwd}':"
     )
@@ -41,7 +47,7 @@ def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> 
         questions = [
             inquirer.Confirm(
                 "confirm",
-                message="Allow Tig to write above command?",
+                message="Allow Tig to run the above command?",
                 default=True,
             ),
         ]
@@ -52,4 +58,4 @@ def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> 
             )
             return f"[execute_command for command: '{command}' inside '{absolute_cwd}'] Result:\nUser denied permission to execute the command.\nUser has given this instruction: \n<instruction>{feedback}</instruction>\nFeel free to use ask_followup_question tool for further clarification."
 
-    return run_shell_command(command, absolute_cwd)
+    return run_shell_command(command, absolute_cwd, timeout_seconds=timeout)

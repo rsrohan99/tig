@@ -1,9 +1,148 @@
 import subprocess
+import sys
 import os
+import threading
+from collections import deque
+from typing import Deque
+import psutil
+
+
+# Helper function to run in the reader thread
+def _reader_thread_func(
+    process: subprocess.Popen,
+    output_deque: Deque[str],
+    stop_event: threading.Event,
+    stream_to_terminal: bool = True,
+):
+    """Reads output lines, prints them, and stores them in a deque."""
+    try:
+        # process.stdout should be valid as we set PIPE
+        # Use iter to read lines until EOF ('')
+        if not process.stdout:
+            return
+        if stream_to_terminal:
+            sys.stdout.write(
+                "# Command output:  (ctrl+c to terminate running command)\n"
+                + "-" * 80
+                + "\n"
+            )
+            sys.stdout.flush()
+        for line in iter(process.stdout.readline, ""):
+            if stop_event.is_set():
+                # print("[Reader Thread] Stop event set, breaking.", file=sys.stderr)
+                break
+
+            # line already decoded if text=True in Popen
+            line_stripped = line.rstrip()  # Keep original line ending for print
+
+            if stream_to_terminal:
+                try:
+                    # Write directly to stdout and flush to ensure visibility
+                    sys.stdout.write(f"| {line}")
+                    sys.stdout.flush()
+                except Exception as stream_err:
+                    # Handle cases where stdout might be closed or unavailable
+                    print(f"[Reader Thread Stream Error] {stream_err}", file=sys.stderr)
+
+            output_deque.append(line_stripped)  # Store line without trailing newline
+
+        if stream_to_terminal:
+            sys.stdout.write("-" * 77 + "\n")
+            sys.stdout.flush()
+
+        # print("[Reader Thread] Reached EOF or stop event.", file=sys.stderr)
+
+    except ValueError:
+        # Can happen if the process closes stdout abruptly after stop_event is set
+        # or if Popen failed and process.stdout is None (though caught earlier usually)
+        if not stop_event.is_set():
+            print(
+                "[Reader Thread Error] ValueError (possibly closed pipe)",
+                file=sys.stderr,
+            )
+    except Exception as e:
+        # Catch other potential errors during reading
+        print(
+            f"[Reader Thread Error] An unexpected error occurred: {e}", file=sys.stderr
+        )
+    finally:
+        # print("[Reader Thread] Exiting.", file=sys.stderr)
+        # Ensure stdout is closed if Popen didn't handle it (should be automatic)
+        if process.stdout and not process.stdout.closed:
+            try:
+                process.stdout.close()
+            except Exception:
+                pass  # Ignore errors during cleanup close
+
+
+def _terminate_process_tree(process: subprocess.Popen):
+    """Terminates the process and its children using psutil or platform fallback."""
+    pid = process.pid
+    try:
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        procs_to_terminate = children + [parent]  # Include parent
+
+        # Terminate children first, then parent
+        for p in children:
+            try:
+                # print(f"    Terminating child PID {p.pid} ({p.name()})...", file=sys.stderr)
+                p.terminate()
+            except psutil.NoSuchProcess:
+                # print(f"    Child PID {p.pid} already gone.", file=sys.stderr)
+                pass
+            except Exception as child_term_err:
+                print(
+                    f"    Error terminating child {p.pid}: {child_term_err}",
+                    file=sys.stderr,
+                )
+
+        try:
+            # print(f"    Terminating parent PID {parent.pid} ({parent.name()})...", file=sys.stderr)
+            parent.terminate()
+        except psutil.NoSuchProcess:
+            # print(f"    Parent PID {parent.pid} already gone.", file=sys.stderr)
+            pass
+        except Exception as parent_term_err:
+            print(
+                f"    Error terminating parent {parent.pid}: {parent_term_err}",
+                file=sys.stderr,
+            )
+
+        # Wait for graceful termination, then kill leftovers
+        _, alive = psutil.wait_procs(procs_to_terminate, timeout=2)
+
+        for p in alive:
+            try:
+                # print(
+                #     f"    Force killing remaining process PID {p.pid} ({p.name()})...",
+                #     file=sys.stderr,
+                # )
+                p.kill()
+            except psutil.NoSuchProcess:
+                # print(f"    Process PID {p.pid} gone before kill.", file=sys.stderr)
+                pass
+            except Exception as kill_err:
+                print(f"    Error force killing {p.pid}: {kill_err}", file=sys.stderr)
+
+        return
+
+    except psutil.NoSuchProcess:
+        pass
+        # print(
+        #     f"--- Process PID {pid} not found by psutil (already terminated?). ---",
+        #     file=sys.stderr,
+        # )
+        # Fall through to Popen methods just in case Popen object still exists
+    except Exception as psutil_err:
+        print(
+            f"--- An error occurred during psutil termination: {psutil_err}. Falling back... ---",
+            file=sys.stderr,
+        )
 
 
 def run_shell_command(
-    command: str, cwd: str, timeout_seconds: int = 10, max_lines: int = 50
+    command: str, cwd: str, timeout_seconds: int = 3600, max_lines: int = 50
 ) -> str:
     """
     Runs a shell command in a specified directory and captures its output.
@@ -37,6 +176,9 @@ def run_shell_command(
     returncode = None
     is_timeout = False
     process = None  # Initialize process to None
+    output_deque: Deque[str] = deque(maxlen=max_lines)
+    stop_reader_event = threading.Event()
+    reader_thread = None
 
     try:
         # Basic validation for CWD
@@ -55,27 +197,43 @@ def run_shell_command(
             stderr=subprocess.STDOUT,  # Capture stderr along with stdout
             text=True,  # Decode output as text
             encoding="utf-8",  # Be explicit about encoding
-            errors="replace",  # Handle potential decoding errors gracefully
+            bufsize=1,  # Line-buffered
+            universal_newlines=True,  # Ensure text mode works correctly           errors="replace",  # Handle potential decoding errors gracefully
         )
+        reader_thread = threading.Thread(
+            target=_reader_thread_func,
+            args=(process, output_deque, stop_reader_event, True),
+            daemon=True,  # Allows main program to exit even if thread is stuck (though we join later)
+        )
+        reader_thread.start()
 
-        # Try to communicate with the process, applying the timeout
         try:
-            # communicate() waits for the process to terminate OR the timeout.
-            # It reads all output and returns it.
-            # If timeout occurs, it kills the process and raises TimeoutExpired.
-            stdout_data, _ = process.communicate(timeout=timeout_seconds)
-            # If we reach here, the process finished within the timeout.
+            process.wait(timeout=timeout_seconds)
             returncode = process.returncode
 
         except subprocess.TimeoutExpired:
-            process.kill()
-            stdout_data, _ = process.communicate()
             is_timeout = True
-
-        # Process the captured output (full or partial)
-        if stdout_data:
-            # Strip leading/trailing whitespace and split into lines
-            output_lines = stdout_data.strip().splitlines()
+            stop_reader_event.set()
+            _terminate_process_tree(process)
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                print(
+                    "--- Warning: Process did not update status quickly after termination signal. ---",
+                    file=sys.stderr,
+                )
+            except Exception as wait_err:
+                print(
+                    f"--- Warning: Error waiting after termination signal: {wait_err} ---",
+                    file=sys.stderr,
+                )
+        except KeyboardInterrupt:  # <-- Catch Ctrl+C
+            stop_reader_event.set()
+            _terminate_process_tree(process)
+            try:
+                process.wait(timeout=1)  # Allow Popen object to update
+            except Exception:
+                pass
 
     except FileNotFoundError:
         error_message = f"Error: Command or components not found for: '{command}'"
@@ -88,19 +246,23 @@ def run_shell_command(
     except Exception as e:
         # Catch other potential exceptions during Popen or communicate
         error_message = f"An unexpected error occurred: {type(e).__name__}: {e}"
-    finally:
-        # Ensure the process is terminated if it somehow still exists
-        # (communicate() should handle termination on timeout/completion,
-        # but this is an extra safeguard).
-        if process and process.poll() is None:  # Check if process is still running
-            try:
-                process.kill()
-                process.wait()  # Wait briefly for resources to be cleaned up
-            except Exception as kill_err:
-                print(
-                    f"Error trying to kill lingering process: {kill_err}"
-                )  # Log this, but don't overwrite main error
 
+    finally:
+        # Ensure the reader thread is stopped and joined
+        if reader_thread and reader_thread.is_alive():
+            stop_reader_event.set()
+            # print("[Main Thread] Joining reader thread...", file=sys.stderr)
+            reader_thread.join(timeout=2.0)  # Wait briefly for reader to finish
+            if reader_thread.is_alive():
+                print(
+                    "[Main Thread] Warning: Reader thread did not exit cleanly.",
+                    file=sys.stderr,
+                )
+
+    if len(output_deque) == max_lines and max_lines > 0:
+        output_lines.append("...")  # Indicate truncation if deque is full
+
+    output_lines.extend(list(output_deque))  # Add lines from deque
     # --- Return formatting ---
     if error_message:
         # If an error occurred during setup or execution

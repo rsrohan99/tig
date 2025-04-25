@@ -20,6 +20,7 @@ TOOL_NAMES = [
 
 
 TOOL_PARAM_NAMES = [
+    "timeout",
     "command",
     "path",
     "content",
