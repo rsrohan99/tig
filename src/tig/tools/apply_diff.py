@@ -248,16 +248,10 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         start_line = replacement["start_line"] + (
             0 if replacement["start_line"] == 0 else delta
         )
-        has_all_line_numbers = (
-            every_line_has_line_numbers(search_content)
-            and every_line_has_line_numbers(replace_content)
-        ) or (
-            not every_line_has_line_numbers(search_content)
-            and (replace_content.strip() == "")
-        )
 
-        if has_all_line_numbers:
+        if every_line_has_line_numbers(search_content):
             search_content = strip_line_numbers(search_content)
+        if every_line_has_line_numbers(replace_content):
             replace_content = strip_line_numbers(replace_content)
 
         if search_content == replace_content:
@@ -292,7 +286,23 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         found_index = dmp.match_main(original_chunk, search_chunk, 0)
         if found_index == -1:
             diff_error_messages.append(
-                f"Error: Search content for this diff was not found in the original file for apply_diff tool.\nDebug Info:\n- Search content:\n{search_chunk}\n---\n- Original content:\n{original_chunk}\n---\nMake sure search content is exactly same as in the file. If you are unsure, use read_file tool to verify the content."
+                f"Error: Search content for this diff was not found in the original file for apply_diff tool.\nDebug Info:\n- Search content:\n{search_chunk}\n---\n- Original content(from start_line you provided):\n{'\n'.join([f'{(i + 1):4d} | {result_lines[i]}' for i in range(exact_start_index, exact_end_index + 1)])}\n---\nMake sure search content is exactly same as in the file. If you are unsure, use read_file tool to verify the content. And make sure the start_line is correct and your search content actually from start_line.IMPORTANT: - the start_line must match the line number of the search content in the original file. if not sure, use the read_file tool. - the start_line ONLY needs to be specified ONCE at the start of the search block."
+                + dedent('''
+                Example valid diff format:
+                <<<<<<< SEARCH
+                :start_line:1
+                -------
+                def calculate_total(items):
+                    total = 0
+                    for item in items:
+                        total += item
+                    return total
+                =======
+                def calculate_total(items):
+                    """Calculate total with 10% markup"""
+                    return sum(item * 1.1 for item in items)
+                >>>>>>> REPLACE
+                ''')
             )
             continue
 
@@ -310,6 +320,8 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         delta = delta - len(matched_lines) + len(replace_lines)
         successfull_diffs += 1
 
+    if successfull_diffs == 0:
+        return f"[apply_diff for '{file_path}'] Result:\nNo diffs were successfully applied to '{file_path}'. Make sure the add correct start_line. use read_file tool if unsure.\nHere are some information on why the diffs were not applied:\n{'\n---\n'.join(diff_error_messages)}"
     file_extension = file_path.split(".")[-1]
     full_final_content = line_ending.join(result_lines)
     errors_found = ""
@@ -348,6 +360,4 @@ def apply_diff(arguments: dict, mode: str, auto_approve: bool = False) -> str:
         result_message = f"[apply_diff for '{file_path}'] Result:\nAll {successfull_diffs} out of {len(replacements)} diffs were successfully applied to '{file_path}'.\n"
     elif successfull_diffs > 0 and successfull_diffs < len(replacements):
         result_message = f"[apply_diff for '{file_path}'] Result:\n{successfull_diffs} out of {len(replacements)} diffs were successfully applied to '{file_path}'.\nAs some of the diffs were not applied, make sure to use read_file on '{file_path}' to ensure everything is ok as partially applied diffs may lead to unexpected results.\nHere are some information on why the diffs were not applied:\n{'\n---\n'.join(diff_error_messages)}"
-    elif successfull_diffs == 0:
-        result_message = f"[apply_diff for '{file_path}'] Result:\nNo diffs were successfully applied to '{file_path}'.\nHere are some information on why the diffs were not applied:\n{'\n---\n'.join(diff_error_messages)}"
     return result_message

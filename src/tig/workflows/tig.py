@@ -14,6 +14,7 @@ from llama_index.core.workflow import (
 from tig.modes import MODES
 from tig.utils.xml import parse_tool_call
 from tig.prompts.system import get_system_prompt
+from tig.prompts.environment import get_environment_reminder_prompt
 from tig.tools import (
     list_files,
     ask_followup_questions,
@@ -80,9 +81,13 @@ class TigWorkflow(Workflow):
         if ev.is_system_prompt:
             self.chat_history.append(ChatMessage(role="system", content=prompt))
         else:
-            self.chat_history.append(ChatMessage(role="user", content=prompt))
+            self.chat_history.append(
+                ChatMessage(
+                    role="user", content=prompt + get_environment_reminder_prompt()
+                )
+            )
         response = await self.llm.achat(messages=self.chat_history)
-        self.chat_history.append(ChatMessage(role="assistant", content=str(response)))
+        self.chat_history.append(response.message)
         return LLMResponded(response=str(response))
 
     @step
@@ -94,7 +99,7 @@ class TigWorkflow(Workflow):
         match = re.search(pattern, response, re.DOTALL)
         if not match:
             return PromptGenerated(
-                prompt="You did not use any tool, please use appropriate tool using valid xml format."
+                prompt="You did not use any tool, please use appropriate tool using valid tool format."
             )
         clean_response = re.sub(
             r"<(?P<tag>\w+)[^>]*>.*?</(?P=tag)>", "", response, flags=re.DOTALL
@@ -105,7 +110,11 @@ class TigWorkflow(Workflow):
         clean_response = re.sub(r"^\s*(assistant:\s*)+", "", clean_response).strip()
         # print(f"\nTig: {clean_response}\n")
         print(f"\n{response}\n")
-        tool = parse_tool_call(match.group())
+        tool = parse_tool_call(response.strip())
+        if not tool:
+            return PromptGenerated(
+                prompt="You did not use any tool, please use appropriate tool using valid tool format."
+            )
         return ToolCallRequired(tool=tool)
 
     @step
@@ -154,5 +163,5 @@ class TigWorkflow(Workflow):
                 )
         except Exception as e:
             return PromptGenerated(
-                prompt=f'Error occurred while using tool "{tool_name}": {str(e)}\nMake sure to use tools correctly in valid xml format and valid arguments.'
+                prompt=f'Error occurred while using tool "{tool_name}": {str(e)}\nMake sure to use tools correctly in valid tool format and valid arguments.'
             )

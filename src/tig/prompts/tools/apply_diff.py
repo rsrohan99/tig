@@ -26,6 +26,9 @@ Diff format:
 >>>>>>> REPLACE
 
 ```
+IMPORTANT:
+- the start_line must match the line number of the search content in the original file. if not sure, use the read_file tool
+- the start_line ONLY needs to be specified once at the start of the search block.
 
 
 Example:
