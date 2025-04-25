@@ -1,8 +1,10 @@
 import os
 import inquirer
 
+from tig.services.command_runner import run_shell_command
 
-def execute_command(arguments: dict, mode: str = "code") -> str:
+
+def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> str:
     """
     Asks the user to execute a command in the terminal.
     Args:
@@ -26,26 +28,28 @@ def execute_command(arguments: dict, mode: str = "code") -> str:
         absolute_cwd = os.path.abspath(cwd)
         if not os.path.exists(absolute_cwd):
             return f"Error: The specified 'cwd': '{cwd}' does not exist. Please provide a valid directory as 'cwd' for execute_command tool."
-        command = f"(cd {absolute_cwd} && {command})"
+    else:
+        absolute_cwd = os.getcwd()
 
-    print("-" * 80)
     print(
-        f"Tig asked you to execute the following command in your terminal:\n\n```\n{command}\n```\nCopy everything between ``` and paste it in your terminal.\n\nAfter you run the command, please provide Tig with the output of the command and any other relevant information or feedback you have.\n\nIf you don't want to run the command, tell tig what to do instead so that it can continue with its task."
+        f"\n# Tig is about to execute the command: '{command}' inside '{absolute_cwd}':"
     )
     print("-" * 80)
-    questions = [inquirer.Editor("long_resp", message="Your response: ")]
-    answers = inquirer.prompt(questions)
-    if answers and answers.get("long_resp", ""):
-        feedback = answers.get("long_resp", "").strip()
-    else:
-        print("Editor not found, enter your response here: ", end="")
-        feedback_lines = []
-        while True:
-            feedback = input()
-            if feedback.strip() == "":
-                break
-            feedback_lines.append(feedback)
+    print(f"> {command}")
+    print("-" * 80)
+    if not auto_approve:
+        questions = [
+            inquirer.Confirm(
+                "confirm",
+                message="Allow Tig to write above command?",
+                default=True,
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        if answers and not answers["confirm"]:
+            feedback = input(
+                "Instruct Tig on what to do instead as you have rejected the command execution: "
+            )
+            return f"[execute_command for command: '{command}' inside '{absolute_cwd}'] Result:\nUser denied permission to execute the command.\nUser has given this instruction: \n<instruction>{feedback}</instruction>\nFeel free to use ask_followup_question tool for further clarification."
 
-        feedback = "\n".join(feedback_lines)
-
-    return f"""[execute_command for command: '{command}'{f' in cwd: "{cwd}"' if cwd else ""}]\nUser provided the following response, which includes the output of the command and may also include additional feedback.\n<response>\n{feedback}\n</response>"""
+    return run_shell_command(command, absolute_cwd)
