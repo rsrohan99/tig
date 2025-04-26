@@ -4,10 +4,13 @@ ANSI_RED = "\033[31m"
 ANSI_RESET = "\033[0m"
 
 
-def print_intro(mode: str, auto_approve: bool = False) -> None:
+def print_intro(
+    mode: str, llm_provider: str, llm_model_name: str, auto_approve: bool = False
+) -> None:
     os.system("cls" if os.name == "nt" else "clear")
     print("🐯 Tig - AI coding agent")
     print(f"\nRunning in '{mode}' mode. Available modes: 'architect', 'code'.")
+    print(f"\nUsing LLM provider: '{llm_provider}', model: '{llm_model_name}'.")
     if auto_approve:
         print(
             f"\n{ANSI_RED}[IMPORTANT!]{ANSI_RESET} Auto-approve mode is enabled. All actions will be executed without confirmation."

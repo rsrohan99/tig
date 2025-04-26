@@ -27,7 +27,7 @@ async def cli():
     parser.add_argument(
         "--auto-approve",
         action="store_true",
-        help="Automatically approve actions without user confirmation(use with caution).",
+        help="Automatically approve actions without user confirmation (use with caution).",
     )
     parser.add_argument(
         "--verbose",
@@ -55,7 +55,8 @@ async def cli():
             print("No mode selected. Exiting.")
             return
 
-    print_intro(args.mode, args.auto_approve)
+    llm, provider, model_name = get_llm()
+    print_intro(args.mode, provider, model_name, args.auto_approve)
 
     while True:
         new_task = input("\nNew task: ").strip()
@@ -78,7 +79,7 @@ async def cli():
                 )
                 continue
             args.mode = new_mode
-            print_intro(args.mode, args.auto_approve)
+            print_intro(args.mode, provider, model_name, args.auto_approve)
             continue
         if new_task.lower().startswith("/"):
             print(
@@ -86,7 +87,7 @@ async def cli():
             )
             continue
         workflow = TigWorkflow(
-            llm=get_llm(),
+            llm=llm,
             mode=args.mode,
             auto_approve=args.auto_approve,
             timeout=3600,
