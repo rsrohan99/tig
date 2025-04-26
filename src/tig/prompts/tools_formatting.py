@@ -17,6 +17,6 @@ For example:
 <path>src/main.js</path>
 </read_file>
 
-Always adhere to this format for the tool use to ensure proper parsing and execution. Inside the xml-style tags, you don't need to worry about escaping special characters like <, >, or &. The parser will handle them correctly.
+Always adhere to this format for the tool use to ensure proper parsing and execution. Inside the xml-style tags, DO NOT escape special characters like &, <, > etc. use them as it is, the parser will handle them correctly.
 
 """)

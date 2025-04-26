@@ -4,7 +4,10 @@ import os
 import threading
 from collections import deque
 from typing import Deque
+
 import psutil
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
 
 
 # Helper function to run in the reader thread
@@ -22,7 +25,7 @@ def _reader_thread_func(
             return
         if stream_to_terminal:
             sys.stdout.write(
-                "# Command output:  (ctrl+c to terminate running command)\n"
+                "# Command output:  (press 'x' to terminate running command)\n"
                 + "-" * 80
                 + "\n"
             )
@@ -141,6 +144,29 @@ def _terminate_process_tree(process: subprocess.Popen):
         )
 
 
+def _terminate_on_keypress(
+    process: subprocess.Popen,
+    stop_event: threading.Event,
+):
+    session = PromptSession()
+    kb = KeyBindings()
+
+    @kb.add("<any>")
+    def _(event):
+        # Get the pressed key character
+        key = event.key_sequence[0].key
+        if key == "x":
+            stop_event.set()
+            _terminate_process_tree(process)
+            try:
+                process.wait(timeout=1)  # Allow Popen object to update
+            except Exception:
+                pass
+        event.app.exit()
+
+    session.prompt("", key_bindings=kb, multiline=False)
+
+
 def run_shell_command(
     command: str, cwd: str, timeout_seconds: int = 3600, max_lines: int = 50
 ) -> str:
@@ -179,6 +205,7 @@ def run_shell_command(
     output_deque: Deque[str] = deque(maxlen=max_lines)
     stop_reader_event = threading.Event()
     reader_thread = None
+    key_listener_thread = None
 
     try:
         # Basic validation for CWD
@@ -207,6 +234,17 @@ def run_shell_command(
         )
         reader_thread.start()
 
+        # Start a thread to listen for 'x' keypress to terminate the process
+        key_listener_thread = threading.Thread(
+            target=_terminate_on_keypress,
+            args=(
+                process,
+                stop_reader_event,
+            ),
+            daemon=True,
+        )
+        key_listener_thread.start()
+
         try:
             process.wait(timeout=timeout_seconds)
             returncode = process.returncode
@@ -227,13 +265,6 @@ def run_shell_command(
                     f"--- Warning: Error waiting after termination signal: {wait_err} ---",
                     file=sys.stderr,
                 )
-        except KeyboardInterrupt:  # <-- Catch Ctrl+C
-            stop_reader_event.set()
-            _terminate_process_tree(process)
-            try:
-                process.wait(timeout=1)  # Allow Popen object to update
-            except Exception:
-                pass
 
     except FileNotFoundError:
         error_message = f"Error: Command or components not found for: '{command}'"
