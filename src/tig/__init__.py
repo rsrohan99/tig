@@ -24,6 +24,16 @@ async def cli():
         choices=["architect", "code"],
         help="Mode to run the agent in. 'architect' for brainstorming and planning the system, 'code' for implementing the plan.",
     )
+    parser.add_argument(
+        "--auto-approve",
+        action="store_true",
+        help="Automatically approve actions without user confirmation(use with caution).",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     args = parser.parse_args()
     os.system("cls" if os.name == "nt" else "clear")
 
@@ -45,7 +55,7 @@ async def cli():
             print("No mode selected. Exiting.")
             return
 
-    print_intro(args.mode)
+    print_intro(args.mode, args.auto_approve)
 
     while True:
         new_task = input("\nNew task: ").strip()
@@ -68,7 +78,7 @@ async def cli():
                 )
                 continue
             args.mode = new_mode
-            print_intro(args.mode)
+            print_intro(args.mode, args.auto_approve)
             continue
         if new_task.lower().startswith("/"):
             print(
@@ -78,6 +88,7 @@ async def cli():
         workflow = TigWorkflow(
             llm=Gemini(model="models/gemini-2.0-flash"),
             mode=args.mode,
+            auto_approve=args.auto_approve,
             timeout=3600,
         )
         # draw_all_possible_flows(workflow)

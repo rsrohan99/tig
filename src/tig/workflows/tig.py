@@ -50,6 +50,8 @@ class TigWorkflow(Workflow):
         *args: Any,
         llm: LLM,
         mode: str,
+        auto_approve: bool = False,
+        verbose_prompt: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -58,7 +60,8 @@ class TigWorkflow(Workflow):
             raise ValueError(f"Invalid mode: {mode}")
         self.mode = mode
         self.chat_history: List[ChatMessage] = []
-        self.auto_approve = False
+        self.auto_approve = auto_approve
+        self.verbose_prompt = verbose_prompt
 
     @step
     async def start_new_task(self, ctx: Context, ev: StartEvent) -> NewTaskCreated:
@@ -77,7 +80,8 @@ class TigWorkflow(Workflow):
     @step
     async def prompt_llm(self, ev: PromptGenerated) -> LLMResponded:
         prompt = ev.prompt
-        print(prompt)
+        if self.verbose_prompt:
+            print(prompt)
         if ev.is_system_prompt:
             self.chat_history.append(ChatMessage(role="system", content=prompt))
         else:
@@ -108,8 +112,10 @@ class TigWorkflow(Workflow):
             r"```xml.*?```", "", clean_response, flags=re.DOTALL
         ).strip()
         clean_response = re.sub(r"^\s*(assistant:\s*)+", "", clean_response).strip()
-        # print(f"\nTig: {clean_response}\n")
-        print(f"\n{response}\n")
+        if self.verbose_prompt:
+            print(f"\n{response}\n")
+        else:
+            print(f"\nTig: {clean_response}\n")
         tool = parse_tool_call(response.strip())
         if not tool:
             return PromptGenerated(
