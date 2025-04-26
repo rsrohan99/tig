@@ -6,10 +6,10 @@ import inquirer
 from dotenv import load_dotenv
 
 # from llama_index.utils.workflow import draw_all_possible_flows
-from llama_index.llms.gemini import Gemini
 
 from tig.workflows.tig import TigWorkflow
 from tig.utils.intro import print_intro
+from tig.services.llms import get_llm
 
 
 async def cli():
@@ -86,7 +86,7 @@ async def cli():
             )
             continue
         workflow = TigWorkflow(
-            llm=Gemini(model="models/gemini-2.0-flash"),
+            llm=get_llm(),
             mode=args.mode,
             auto_approve=args.auto_approve,
             timeout=3600,
