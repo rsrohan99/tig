@@ -1,4 +1,3 @@
-import os
 import re
 from textwrap import dedent
 from functools import partial

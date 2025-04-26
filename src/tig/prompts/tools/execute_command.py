@@ -8,7 +8,10 @@ Parameters:
 - cwd: (optional) The working directory to execute the command in (default: {pwd}).
 - timeout: (optional, in seconds) Use this only for commands that run forever, like running dev servers e.g. 'npm run dev', fastapi, flask, django etc. The user will run the command for this many seconds and then send you the output.
 
-Note: Do not try to run 'cd' command to change directory, it will not work as cd state is not preserved. If you wanna run a command in a different directory other than "{pwd}", you need to put that directory in the `cwd` parameter.
+Note:
+- Do not try to run 'cd' command to change directory, it will not work as cd state is not preserved. If you wanna run a command in a different directory other than "{pwd}", you need to put that directory in the `cwd` parameter.
+- the command will be executed in a non-interactive shell, so make sure the command doesn't require user interaction. If user interaction is must, ask the user via ask_followup_question to manually run the command.
+
 
 Usage:
 <execute_command>

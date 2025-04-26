@@ -26,6 +26,9 @@ from tig.tools import (
     execute_command,
 )
 
+ANSI_GREEN = "\033[32m"
+ANSI_RESET = "\033[0m"
+
 
 class NewTaskCreated(Event):
     pass
@@ -106,7 +109,16 @@ class TigWorkflow(Workflow):
                 prompt="You did not use any tool, please use appropriate tool using valid tool format."
             )
         clean_response = re.sub(
-            r"<(?P<tag>\w+)[^>]*>.*?</(?P=tag)>", "", response, flags=re.DOTALL
+            r"<(?P<tag>(?!thinking\b)\w+)[^>]*>.*?</(?P=tag)>",
+            "",
+            response,
+            flags=re.DOTALL,
+        ).strip()
+        clean_response = re.sub(
+            r"<thinking>", "\n# Thought process" + "-" * 63 + "\n", clean_response
+        ).strip()
+        clean_response = re.sub(
+            r"</thinking>", "\n" + "-" * 80 + "\n", clean_response
         ).strip()
         clean_response = re.sub(
             r"```xml.*?```", "", clean_response, flags=re.DOTALL
@@ -115,7 +127,8 @@ class TigWorkflow(Workflow):
         if self.verbose_prompt:
             print(f"\n{response}\n")
         else:
-            print(f"\nTig: {clean_response}\n")
+            if clean_response.strip():
+                print(f"\n🐯 {ANSI_GREEN}Tig:{ANSI_RESET} {clean_response}\n")
         tool = parse_tool_call(response.strip())
         if not tool:
             return PromptGenerated(

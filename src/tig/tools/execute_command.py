@@ -38,7 +38,7 @@ def execute_command(arguments: dict, mode: str = "code", auto_approve=False) -> 
         timeout = 3600
 
     print(
-        f"\n# Tig is about to execute the command: '{command}' inside '{absolute_cwd}':"
+        f"\n# Tig is about to execute the command: '{command}' inside '{absolute_cwd}'{f'for {timeout} seconds' if 'timeout' in arguments else ''}.\n"
     )
     print("-" * 80)
     print(f"> {command}")
