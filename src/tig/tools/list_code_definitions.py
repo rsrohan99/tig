@@ -8,10 +8,13 @@ from tig.tools.list_files import list_files_non_recursively_respecting_gitignore
 
 def get_code_definitions_from_file(path: str) -> list[str]:
     file_ext = path.split(".")[-1]
+    try:
+        parser, query = get_parser(file_ext)
+    except ValueError:
+        return [f"Cannot get code definitions for '{path}'."]
     with open(path, "r") as file:
         code = file.read()
     lines = code.split("\n")
-    parser, query = get_parser(file_ext)
     tree = parser.parse(bytes(code, "utf8"))
     root_node = tree.root_node
     captures = query.captures(root_node)
