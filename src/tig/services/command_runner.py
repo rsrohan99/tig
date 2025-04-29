@@ -164,7 +164,11 @@ def _terminate_on_keypress(
                 pass
         event.app.exit()
 
-    session.prompt("", key_bindings=kb, multiline=False)
+    try:
+        session.prompt("", key_bindings=kb, multiline=False)
+        session.app.exit()
+    except Exception:
+        pass
 
 
 def run_shell_command(
