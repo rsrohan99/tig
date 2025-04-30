@@ -1,6 +1,6 @@
 [project]
-name = "tig"
-version = "0.1.0"
+name = "tig-code"
+version = "0.1.4"
 description = "A terminal-based AI coding agent, similar to Claude Code, OpenAI Codex etc."
 readme = "README.md"
 authors = [
