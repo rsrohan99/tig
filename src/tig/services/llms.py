@@ -38,7 +38,11 @@ def get_llm() -> tuple[LLM, str, str]:
         print("\n⚠️ No model name provided. Using default for the provider.\n")
 
     if provider == "google":
-        llm = Gemini(model=model_name) if model_name else Gemini(model=DEFAULT_MODEL)
+        llm = (
+            Gemini(model=model_name)
+            if model_name
+            else Gemini(model=os.getenv("TIG_MODEL", DEFAULT_MODEL))
+        )
         return llm, provider, llm.model
 
     if provider == "openai":
