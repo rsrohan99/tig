@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from llama_index.llms.gemini import Gemini
+from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.core.llms import LLM
 
 
@@ -17,7 +17,7 @@ SUPPORTED_PROVIDERS = [
 ]
 
 DEFAULT_PROVIDER = "google"
-DEFAULT_MODEL = "models/gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-2.0-flash"
 
 
 def get_llm() -> tuple[LLM, str, str]:
@@ -30,25 +30,29 @@ def get_llm() -> tuple[LLM, str, str]:
             f"\n❌ Unsupported provider: {provider}. Supported providers are: {SUPPORTED_PROVIDERS}"
         )
         print(
-            f"\n⚠️ Defaulting to provider: '{DEFAULT_PROVIDER}' and model: '{DEFAULT_MODEL}'\n"
+            f"\n⚠️ Defaulting to provider: '{DEFAULT_PROVIDER}' and model: '{os.getenv('TIG_MODEL', DEFAULT_MODEL)}'\n"
         )
-        return Gemini(model=DEFAULT_MODEL), DEFAULT_PROVIDER, DEFAULT_MODEL
+        return (
+            GoogleGenAI(model=os.getenv("TIG_MODEL", DEFAULT_MODEL)),
+            DEFAULT_PROVIDER,
+            os.getenv("TIG_MODEL", DEFAULT_MODEL),
+        )
     model_name = os.getenv("TIG_MODEL")
     if not model_name:
         print("\n⚠️ No model name provided. Using default for the provider.\n")
 
     if provider == "google":
         llm = (
-            Gemini(model=model_name)
+            GoogleGenAI(model=model_name)
             if model_name
-            else Gemini(model=os.getenv("TIG_MODEL", DEFAULT_MODEL))
+            else GoogleGenAI(model=DEFAULT_MODEL)
         )
         return llm, provider, llm.model
 
     if provider == "openai":
         from llama_index.llms.openai import OpenAI
 
-        llm = OpenAI(model_name=model_name) if model_name else OpenAI(model="o4-mini")
+        llm = OpenAI(model=model_name) if model_name else OpenAI(model="o4-mini")
         return llm, provider, llm.model
 
     if provider == "anthropic":
@@ -98,5 +102,9 @@ def get_llm() -> tuple[LLM, str, str]:
         return llm, provider, llm.model
 
     else:
-        llm = Gemini(model=model_name) if model_name else Gemini(model=DEFAULT_MODEL)
+        llm = (
+            GoogleGenAI(model=model_name)
+            if model_name
+            else GoogleGenAI(model=DEFAULT_MODEL)
+        )
         return llm, provider, llm.model
