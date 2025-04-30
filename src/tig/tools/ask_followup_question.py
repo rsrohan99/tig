@@ -37,10 +37,11 @@ def ask_followup_questions(arguments: Dict) -> str:
         )
         manual_answer_prompt = "Let me enter my own answer"
         suggestions.append(manual_answer_prompt)
+        print(f"\nTig wants to know: {arguments['question']}")
         questions = [
             inquirer.List(
                 "answer",
-                message=arguments["question"],
+                message="Please select an answer or enter your own:",
                 choices=suggestions,
             )
         ]
