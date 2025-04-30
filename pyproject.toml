@@ -1,7 +1,7 @@
 [project]
 name = "tig-code"
-version = "0.1.4"
-description = "A terminal-based AI coding agent, similar to Claude Code, OpenAI Codex etc."
+version = "0.1.5"
+description = "A terminal-based AI coding agent, similar to Claude Code, OpenAI Codex etc. but works with many more LLMs."
 readme = "README.md"
 authors = [
     { name = "Rohan", email = "rsrohan99@gmail.com" }
