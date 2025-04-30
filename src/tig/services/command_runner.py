@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 import sys
 import os
@@ -7,6 +8,7 @@ from typing import Deque
 
 import psutil
 from prompt_toolkit import PromptSession
+from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings
 
 
@@ -144,35 +146,46 @@ def _terminate_process_tree(process: subprocess.Popen):
         )
 
 
+async def prompt_with_timeout(session: PromptSession, kb):
+    try:
+        await asyncio.wait_for(
+            session.prompt_async("", key_bindings=kb, multiline=False), timeout=0.5
+        )
+    except asyncio.TimeoutError:
+        output = session.app.output
+        output.cursor_up(1)
+        output.erase_end_of_line()
+        output.erase_down()
+        output.flush()
+
+
 def _terminate_on_keypress(
     process: subprocess.Popen,
     stop_event: threading.Event,
 ):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     session = PromptSession()
     kb = KeyBindings()
 
-    @kb.add("<any>")
-    def _(event):
-        if stop_event.is_set():
-            event.app.exit()
-            return
-        # Get the pressed key character
-        key = event.key_sequence[0].key
-        if key == "x":
-            stop_event.set()
-            _terminate_process_tree(process)
-            try:
-                process.wait(timeout=1)  # Allow Popen object to update
-            except Exception:
-                pass
-            finally:
-                event.app.exit()
+    @Condition
+    def is_listening():
+        return not stop_event.is_set()
 
-    try:
-        session.prompt("", key_bindings=kb, multiline=False)
-        session.app.exit()
-    except Exception:
-        pass
+    @kb.add("x", filter=is_listening)
+    def _(event):
+        stop_event.set()
+        _terminate_process_tree(process)
+        try:
+            process.wait(timeout=1)  # Allow Popen object to update
+        except Exception:
+            pass
+        finally:
+            event.app.exit()
+
+    while not stop_event.is_set():
+        loop.run_until_complete(prompt_with_timeout(session, kb))
+    loop.close()
 
 
 def run_shell_command(
@@ -261,8 +274,10 @@ def run_shell_command(
             is_timeout = True
             stop_reader_event.set()
             _terminate_process_tree(process)
+            reader_thread.join(timeout=2.0)
             try:
                 process.wait(timeout=2)
+                process.kill()  # Ensure process is killed
             except subprocess.TimeoutExpired:
                 print(
                     "--- Warning: Process did not update status quickly after termination signal. ---",
@@ -295,6 +310,16 @@ def run_shell_command(
             if reader_thread.is_alive():
                 print(
                     "[Main Thread] Warning: Reader thread did not exit cleanly.",
+                    file=sys.stderr,
+                )
+        if key_listener_thread and key_listener_thread.is_alive():
+            stop_reader_event.set()
+            key_listener_thread.join(
+                timeout=2.0
+            )  # Wait briefly for key listener to finish
+            if key_listener_thread.is_alive():
+                print(
+                    "[Main Thread] Warning: Key listener thread did not exit cleanly.",
                     file=sys.stderr,
                 )
 
