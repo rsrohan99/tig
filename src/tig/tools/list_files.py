@@ -1,7 +1,6 @@
 import os
 import time
 from pathlib import Path
-from textwrap import dedent
 from typing import Dict
 
 import pathspec
