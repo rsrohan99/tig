@@ -39,7 +39,7 @@ It has different modes for different tasks:
 
 Tig depends on some external tools:
 
-- Ripgrep: For regex search accross the codebase
+- **Ripgrep**: For regex search accross the codebase
 
 Make sure to install it for your operating system.
 
@@ -90,7 +90,7 @@ tig --auto-approve
 ```
 
 Finally when prompted, provide tig with a task to get started:
-```bash
+```txt
 ...
 New task: Create a screen recorder website for chrome
 ...
