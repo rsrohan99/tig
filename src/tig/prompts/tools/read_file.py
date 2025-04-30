@@ -5,7 +5,7 @@ READ_FILE_TOOL_PROMPT = dedent("""
 Description: Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. The output includes line numbers prefixed to each line (e.g. "1 | const x = 1"), making it easier to reference specific lines when creating diffs or discussing code. By specifying start_line and end_line parameters, you can efficiently read specific portions of large files without loading the entire file into memory. Do not read binary files using this tool.
 Parameters:
 - path: (required) The path of the file to read (relative to the current workspace directory {pwd})
-- start_line: (optional) The starting line number to read from (1-based). If not provided, it starts from the beginning of the file.
+- start_line: (optional) The starting line number to read from (1-based, inclusive). If not provided, it starts from the beginning of the file.
 - end_line: (optional) The ending line number to read to (1-based, inclusive). If not provided, it reads to the end of the file.
 Usage:
 <read_file>

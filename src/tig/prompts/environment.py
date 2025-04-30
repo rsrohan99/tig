@@ -17,10 +17,17 @@ Current Workspace Directory: {pwd}
 Current Time: {current_time}
 
 The Current Workspace Directory is the active project directory, and is therefore the default directory for all tool operations.
+
+The main task you are trying to accomplish is:
+<task>
+{task}
+</task>
+
+Only attempt_completion if all the steps for the above task are done and the task is complete. Do a lot of thinking inside <thinking>...</thinking> tags to evaluate current progress.
 ====""")
 
 
-def get_environment_reminder_prompt():
+def get_environment_reminder_prompt(task: str):
     os_info = platform.system()  # Returns the OS name (e.g., 'Linux', 'Darwin', etc.)
     default_shell = os.getenv("SHELL")  # The environment variable for default shell
     home_dir = os.path.expanduser("~")  # Expands to the current user's home directory
@@ -37,4 +44,5 @@ def get_environment_reminder_prompt():
         home_dir=home_dir,
         pwd=current_dir,
         current_time=formatted_time,
+        task=task,
     )

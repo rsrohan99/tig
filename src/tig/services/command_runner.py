@@ -153,6 +153,9 @@ def _terminate_on_keypress(
 
     @kb.add("<any>")
     def _(event):
+        if stop_event.is_set():
+            event.app.exit()
+            return
         # Get the pressed key character
         key = event.key_sequence[0].key
         if key == "x":
@@ -162,7 +165,8 @@ def _terminate_on_keypress(
                 process.wait(timeout=1)  # Allow Popen object to update
             except Exception:
                 pass
-        event.app.exit()
+            finally:
+                event.app.exit()
 
     try:
         session.prompt("", key_bindings=kb, multiline=False)

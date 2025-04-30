@@ -81,7 +81,7 @@ class TigWorkflow(Workflow):
         return PromptGenerated(prompt=system_prompt, is_system_prompt=True)
 
     @step
-    async def prompt_llm(self, ev: PromptGenerated) -> LLMResponded:
+    async def prompt_llm(self, ctx: Context, ev: PromptGenerated) -> LLMResponded:
         prompt = ev.prompt
         if self.verbose_prompt:
             print(prompt)
@@ -90,7 +90,9 @@ class TigWorkflow(Workflow):
         else:
             self.chat_history.append(
                 ChatMessage(
-                    role="user", content=prompt + get_environment_reminder_prompt()
+                    role="user",
+                    content=prompt
+                    + get_environment_reminder_prompt(await ctx.get("task")),
                 )
             )
         response = await self.llm.achat(messages=self.chat_history)
@@ -115,15 +117,15 @@ class TigWorkflow(Workflow):
             flags=re.DOTALL,
         ).strip()
         clean_response = re.sub(
-            r"<thinking>", "\n# Thought process" + "-" * 63 + "\n", clean_response
-        ).strip()
-        clean_response = re.sub(
             r"</thinking>", "\n" + "-" * 80 + "\n", clean_response
         ).strip()
         clean_response = re.sub(
             r"```xml.*?```", "", clean_response, flags=re.DOTALL
         ).strip()
         clean_response = re.sub(r"^\s*(assistant:\s*)+", "", clean_response).strip()
+        clean_response = re.sub(
+            r"<thinking>", "\n# Thought process" + "-" * 63 + "\n", clean_response
+        )
         if self.verbose_prompt:
             print(f"\n{response}\n")
         else:
