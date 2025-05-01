@@ -10,7 +10,9 @@ It can:
 
 All within the terminal! 🚀
 
-![tig](https://github.com/user-attachments/assets/b79944e7-876e-46a5-b74c-d611d67c7d2c)
+Full tutorial series on how to build it from scratch 👇
+
+[![tig](https://img.youtube.com/vi/cgGWTjk1VLg/maxresdefault.jpg)](https://www.youtube.com/watch?v=cgGWTjk1VLg)
 
 ### Modes
 
