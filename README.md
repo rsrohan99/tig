@@ -22,9 +22,9 @@ It has different modes for different tasks:
 - Google Gemini
 - OpenAI
 - Claude
+- OpenRouter
 - Deepseek
 - Groq
-- OpenRouter
 - Local LLMs using Ollama
 
 

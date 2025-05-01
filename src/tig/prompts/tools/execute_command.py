@@ -10,7 +10,7 @@ Parameters:
 
 Note:
 - Do not try to run 'cd' command to change directory, it will not work as cd state is not preserved. If you wanna run a command in a different directory other than "{pwd}", you need to put that directory in the `cwd` parameter.
-- the command will be executed in a non-interactive shell, so make sure the command doesn't require user interaction. If user interaction is must, ask the user via ask_followup_question to manually run the command.
+- the command will be executed in a non-interactive shell, so make sure the command doesn't require user interaction. Addint '-y' to commands skips user confirmation for some commands. If user interaction cannot be skipped, ask the user via ask_followup_question to manually run the command.
 
 
 Usage:
