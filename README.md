@@ -10,7 +10,7 @@ It can:
 
 All within the terminal! 🚀
 
-[![](https://img.youtube.com/vi//maxresdefault.jpg)](https://www.youtube.com/watch?v=)
+![tig](https://github.com/user-attachments/assets/b79944e7-876e-46a5-b74c-d611d67c7d2c)
 
 ### Modes
 
