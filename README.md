@@ -33,6 +33,7 @@ It has different modes for different tasks:
 - **LlamaIndex Workflow**: For orchestrating and multiple LLMs support
 - **Tree-sitter**: For searching code definitions (functions, classes, etc.) accross the codebase and checking for syntax errors
 - **Ripgrep**: For regex search accross the codebase
+- **Google's diff-match-patch**: For comparing and displaying diffs
 
 
 ## Requirements

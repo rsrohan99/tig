@@ -30,7 +30,7 @@ async def cli():
         help="Automatically approve actions without user confirmation (use with caution).",
     )
     parser.add_argument(
-        "--verbose",
+        "--verbose-prompt",
         action="store_true",
         help=argparse.SUPPRESS,
     )
@@ -90,6 +90,7 @@ async def cli():
             llm=llm,
             mode=args.mode,
             auto_approve=args.auto_approve,
+            verbose_prompt=args.verbose_prompt,
             timeout=3600,
         )
         # draw_all_possible_flows(workflow)
