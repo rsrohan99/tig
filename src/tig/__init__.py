@@ -58,13 +58,30 @@ async def cli():
     llm, provider, model_name = get_llm()
     print_intro(args.mode, provider, model_name, args.auto_approve)
 
+    long_input_mode = False
+
     while True:
-        new_task = input("\nNew task: ").strip()
+        if long_input_mode:
+            questions = [
+                inquirer.Editor("long_task", message="New task"),
+            ]
+            answers = inquirer.prompt(questions)
+            if answers:
+                new_task = answers["long_task"].strip()
+                long_input_mode = False
+            else:
+                print("\n❌ Please provide a task.\n")
+                continue
+        else:
+            new_task = input("\nNew task: ").strip()
         if not new_task:
             print("\n❌ Please provide a task.\n")
             continue
         if new_task.lower() == "/exit":
             break
+        if new_task.lower() == "/long":
+            long_input_mode = True
+            continue
         if new_task.lower().startswith("/mode"):
             command_args = new_task.split()
             if len(command_args) < 2:
