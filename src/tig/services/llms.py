@@ -14,6 +14,7 @@ SUPPORTED_PROVIDERS = [
     "ollama",
     "groq",
     "openrouter",
+    "chatsbp",
 ]
 
 DEFAULT_PROVIDER = "google"
@@ -99,6 +100,21 @@ def get_llm() -> tuple[LLM, str, str]:
             if model_name
             else OpenRouter(model="google/gemini-2.0-flash-001")
         )
+        return llm, provider, llm.model
+
+    if provider == "chatsbp":
+        from llama_index.llms.openai import OpenAI
+        api_key =   os.getenv("CHATSBP_API_KEY", "")
+        api_base =   os.getenv("CHATSBP_API_BASE", "https://litellm.sbp.ai")
+
+        # # Get the model name from environment variable or use default
+        if not model_name:
+            model_name =  "azure/gpt-4o"
+
+        llm = OpenAI(model=model_name.split("/")[-1],
+                    api_key=api_key,
+                    api_base=api_base,
+                    additional_kwargs={"model": "azure/gpt-4o"})
         return llm, provider, llm.model
 
     else:
